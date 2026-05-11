@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+  /* Скрываем навигационную панель только на этой странице */
+  .ios-nav-grid {
+    display: none !important;
+  }
+</style>
+<div id="authContainer" class="ios-glass-card fade-in">
+  
+  <div id="loginSection">
+    <h2 class="ios-header">SharedHabits</h2>
+    <div class="mb-3">
+      <input id="loginUser" class="form-control ios-input" placeholder="Никнейм" autocomplete="username" />
+    </div>
+    <div class="mb-3">
+      <input id="loginPass" type="password" class="form-control ios-input" placeholder="Пароль" autocomplete="current-password" />
+    </div>
+    <button class="ios-btn-main" onclick="doLogin();">Войти</button>
+    <span class="ios-link-sub" onclick="toggleAuth(false)">Нет аккаунта? Создать</span>
+  </div>
+
+  <div id="regSection" class="hidden">
+    <h2 class="ios-header">Регистрация</h2>
+    <div class="mb-3">
+      <input id="regUser" class="form-control ios-input" placeholder="Никнейм" />
+    </div>
+    <div class="mb-3">
+      <input id="regEmail" type="email" class="form-control ios-input" placeholder="Email" />
+    </div>
+    <div class="mb-3">
+      <input id="regPass" type="password" class="form-control ios-input" placeholder="Придумайте пароль" />
+    </div>
+    <button class="ios-btn-main" onclick="doRegister();">Зарегистрироваться</button>
+    <span class="ios-link-sub" onclick="toggleAuth(true)">Уже есть аккаунт? Войти</span>
+  </div>
+
+</div>
+
+<script>
+// Переключение между формами
+function toggleAuth(showLogin) {
+  const loginSec = document.getElementById('loginSection');
+  const regSec = document.getElementById('regSection');
+  const container = document.getElementById('authContainer');
+
+  container.style.opacity = '0';
+  
+  setTimeout(() => {
+    if (showLogin) {
+      loginSec.classList.remove('hidden');
+      regSec.classList.add('hidden');
+    } else {
+      loginSec.classList.add('hidden');
+      regSec.classList.remove('hidden');
+    }
+    container.style.opacity = '1';
+  }, 200);
+}
+
+function doLogin(){
+  const user = document.getElementById('loginUser').value;
+  const pass = document.getElementById('loginPass').value;
+  
+  api('/login', 'POST', { username: user, password: pass })
+    .then(r => { 
+      setToken(r.access_token); 
+      window.location = '/habits'; 
+    })
+    .catch(err => alert(err.msg || 'Ошибка входа'));
+}
+
+function doRegister(){
+  const user = document.getElementById('regUser').value;
+  const email = document.getElementById('regEmail').value;
+  const pass = document.getElementById('regPass').value;
+  
+  api('/register', 'POST', { username: user, email: email, password: pass })
+    .then(() => {
+      alert('Успешно! Теперь войдите');
+      toggleAuth(true);
+    })
+    .catch(err => alert(err.msg || 'Ошибка регистрации'));
+}
+</script>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="screen">
+  <header class="ios-header">Пользователь</header>
+
+  <section class="ios-card p-3">
+    <div><strong>Никнейм:</strong> <span id="userName"></span></div>
+    <div><strong>Email:</strong> <span id="userEmail"></span></div>
+  </section>
+</div>
+
+<script>
+const userId = {{ user_id }};
+function loadUser(){
+  api('/users/'+userId,'GET').then(data=>{
+    document.getElementById('userName').textContent=data.username;
+    document.getElementById('userEmail').textContent=data.email;
+  }).catch(err=>alert(err.msg||JSON.stringify(err)));
+}
+window.addEventListener('load', loadUser);
+</script>
+{% endblock %}

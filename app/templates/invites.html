@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="fade-in pb-5">
+  <header class="ios-header" style="text-align: left; padding-left: 10px;">Приглашения</header>
+
+  <section class="ios-glass-card">
+    <h4 style="font-weight: 600; font-size: 18px; margin-bottom: 20px;">Входящие</h4>
+    
+    <div id="myInvites" class="d-flex flex-column gap-3">
+      </div>
+
+    <div id="emptyHint" class="text-center py-5" style="display: none;">
+      <div style="font-size: 40px; margin-bottom: 10px; opacity: 0.5;">📬</div>
+      <p style="color: #8e8e93; font-size: 15px;">Новых приглашений пока нет</p>
+    </div>
+  </section>
+</div>
+
+<style>
+  /* Стиль карточки приглашения как уведомления */
+  .invite-card {
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 22px;
+    padding: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    transition: transform 0.2s ease;
+  }
+
+  .invite-info {
+    margin-bottom: 14px;
+  }
+
+  .invite-habit-name {
+    display: block;
+    font-weight: 700;
+    font-size: 17px;
+    color: #1c1c1e;
+  }
+
+  .invite-sender {
+    display: block;
+    font-size: 13px;
+    color: #8e8e93;
+    margin-top: 2px;
+  }
+
+  .invite-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  /* Кнопки внутри приглашения */
+  .btn-invite {
+    border-radius: 14px;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    transition: opacity 0.2s;
+  }
+
+  .btn-invite:active {
+    opacity: 0.7;
+  }
+
+  .btn-accept {
+    background: #34c759;
+    color: #fff;
+  }
+
+  .btn-reject {
+    background: rgba(255, 59, 48, 0.1);
+    color: #ff3b30;
+  }
+</style>
+
+<script>
+function loadInvites(){
+  api('/invites','GET').then(data => {
+    const list = document.getElementById('myInvites');
+    const hint = document.getElementById('emptyHint');
+    list.innerHTML = '';
+    
+    if(!data || data.length === 0){
+      hint.style.display = 'block';
+      return;
+    }
+    
+    hint.style.display = 'none';
+    
+    data.forEach(inv => {
+      const card = document.createElement('div');
+      card.className = 'invite-card fade-in';
+      
+      // Логика отображения названия привычки
+      const habitTitle = inv.habit_title || `Привычка #${inv.habit_id}`;
+      const sender = inv.inviter_username || 'Пользователь';
+
+      card.innerHTML = `
+        <div class="invite-info">
+          <span class="invite-habit-name">${habitTitle}</span>
+          <span class="invite-sender">от ${sender}</span>
+        </div>
+        <div class="invite-actions">
+          <button class="btn-invite btn-accept" onclick="actionInvite('${inv.token}', 'accept')">Принять</button>
+          <button class="btn-invite btn-reject" onclick="actionInvite('${inv.token}', 'reject')">Отклонить</button>
+        </div>
+      `;
+      list.appendChild(card);
+    });
+  }).catch(err => {
+    console.error(err);
+    alert('Не удалось загрузить приглашения');
+  });
+}
+
+function actionInvite(token, type) {
+  api(`/invites/${token}/${type}`, 'POST')
+    .then(() => {
+      // Обновляем список и вызываем функцию проверки бейджа в base.html (если она доступна)
+      loadInvites();
+      if (typeof checkInvites === 'function') checkInvites();
+    })
+    .catch(err => alert(err.msg || 'Ошибка операции'));
+}
+
+window.addEventListener('load', loadInvites);
+</script>
+{% endblock %}

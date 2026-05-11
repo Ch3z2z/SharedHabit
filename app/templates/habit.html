@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="fade-in pb-5">
+  <header class="ios-header d-flex align-items-center">
+    <a href="/habits" style="text-decoration:none; margin-right: 15px; font-size: 24px;">←</a>
+    Детали
+  </header>
+
+  <section class="ios-glass-card mb-4">
+    <div class="d-flex justify-content-between align-items-start">
+      <div>
+        <h2 id="habitTitle" style="font-weight: 700; letter-spacing: -1px; margin-bottom: 4px;">Загрузка...</h2>
+        <p id="habitDesc" class="text-muted" style="font-size: 15px;"></p>
+      </div>
+      <span id="habitSharedBadge" class="ios-badge"></span>
+    </div>
+
+    <div class="habit-meta-box mt-3 d-flex justify-content-between align-items-center">
+      <div>Создатель: <strong id="habitCreator">...</strong></div>
+      <div id="streakInfo" style="display: none;">
+        🔥 <strong id="streakCount">0</strong> дн.
+      </div>
+    </div>
+
+    <div class="d-flex gap-2 mt-4">
+      <button class="ios-btn-main flex-grow-1 shadow-sm" style="background: #34c759;" onclick="markComplete(true);">✔ Готово</button>
+      <button class="ios-btn-main flex-grow-1 shadow-sm" style="background: #ff3b30;" onclick="markComplete(false);">✘ Пропуск</button>
+    </div>
+    <a id="editLink" class="ios-link-sub" style="text-align: center; margin-top: 15px;">Изменить настройки</a>
+  </section>
+
+  <section class="ios-glass-card mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 style="font-weight: 600; font-size: 18px; margin: 0;">Календарь</h4>
+      <div class="d-flex gap-2 align-items-center">
+        <button class="btn-nav-ios" onclick="changeMonth(-1)">‹</button>
+        <div id="monthYearLabel" class="month-label-current">...</div>
+        <button class="btn-nav-ios" onclick="changeMonth(1)">›</button>
+      </div>
+    </div>
+    
+
+
+    <div id="calendarCarousel" class="carousel-viewport">
+      <div id="calendarGrid" class="calendar-grid"></div>
+    </div>
+    
+    <div class="legend-grid mt-4">
+      <div class="legend-item"><i class="dot dot-empty"></i> <span>Никто</span></div>
+      <div class="legend-item"><i class="dot dot-partial"></i> <span>Частично</span></div>
+      <div class="legend-item"><i class="dot dot-full"></i> <span>Все</span></div>
+      <div class="legend-item"><i class="dot dot-failed"></i> <span>Срыв</span></div>
+    </div>
+  </section>
+
+  <section id="teamSection" class="ios-glass-card mb-4">
+    <h4 style="font-weight: 600; font-size: 18px; margin-bottom: 15px;">Команда</h4>
+    <div id="memberList" class="d-flex flex-column gap-2 mb-3"></div>
+    <div class="invite-box mt-3">
+      <input id="inviteUsername" class="form-control ios-input" placeholder="Никнейм для приглашения" />
+      <button class="ios-btn-main mt-2" style="background: #5856d6;" onclick="sendInvite();">Пригласить участника</button>
+    </div>
+  </section>
+</div>
+
+<style>
+  .btn-nav-ios {
+    width: 30px; height: 30px; border-radius: 50%; border: none;
+    background: rgba(0,0,0,0.05); color: #007aff; font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .month-label-current { font-size: 14px; font-weight: 700; min-width: 100px; text-align: center; text-transform: capitalize; }
+  .carousel-viewport { overflow: hidden; position: relative; min-height: 200px; }
+  
+  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; transition: all 0.3s ease; }
+  .calendar-day {
+    aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; border-radius: 12px;
+    background: rgba(0,0,0,0.05); color: #1c1c1e;
+  }
+
+  .day-empty { background: rgba(0,0,0,0.04); color: #8e8e93; }
+  .day-partial { background: #ffcc00; color: #000; box-shadow: 0 2px 8px rgba(255, 204, 0, 0.2); }
+  .day-full { background: #34c759; color: #fff; box-shadow: 0 4px 10px rgba(52, 199, 89, 0.3); }
+  .day-failed { background: #ff3b30; color: #fff; }
+  .day-today { border: 2px solid #007aff !important; }
+
+  .debug-panel { background: rgba(0,0,0,0.02); border-radius: 10px; border: 1px dashed #ccc; font-size: 11px; }
+  .debug-panel button { border: none; background: #fff; border-radius: 5px; padding: 2px 6px; }
+
+  .ios-badge { background: #007aff; color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .habit-meta-box { background: rgba(0,0,0,0.03); padding: 12px 15px; border-radius: 14px; font-size: 14px; }
+  .legend-grid { display: flex; justify-content: space-between; padding: 10px; background: rgba(0,0,0,0.02); border-radius: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: #8e8e93; }
+  .dot { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+  .dot-empty { background: rgba(0,0,0,0.1); }
+  .dot-partial { background: #ffcc00; }
+  .dot-full { background: #34c759; }
+  .dot-failed { background: #ff3b30; }
+</style>
+
+<script>
+const habitId = parseInt("{{ habit_id }}", 10);
+let viewDate = new Date(); // Дата для отображения в карусели
+let globalLogs = {};
+let globalMemberCount = 0;
+let debugDateOffset = 0;
+
+function loadHabit() {
+    api('/users/me', 'GET').then(userData => {
+        return api('/habits/' + habitId, 'GET');
+    }).then(data => {
+        document.getElementById('habitTitle').textContent = data.title;
+        document.getElementById('habitDesc').textContent = data.description || 'Без описания';
+        document.getElementById('habitCreator').textContent = data.created_by_username || 'Аноним';
+        document.getElementById('editLink').href = `/habit/${habitId}/edit`;
+
+        const teamSection = document.getElementById('teamSection');
+        if (data.is_shared) {
+            teamSection.style.display = 'block'; // Показываем, если общая
+            
+            // Рендерим список участников только если секция видна
+            document.getElementById('memberList').innerHTML = data.members.map(m => 
+                `<div class="member-chip" style="margin-bottom:5px; padding:8px; background:rgba(0,0,0,0.03); border-radius:10px;">
+                    ${m.role === 'owner' ? '👑' : '👤'} ${m.username || 'User'}
+                </div>`
+            ).join('');
+        } else {
+            teamSection.style.display = 'none'; // Прячем полностью, если личная
+        }
+        
+        const badge = document.getElementById('habitSharedBadge');
+        badge.textContent = data.is_shared ? 'Командная' : 'Личная';
+        badge.style.background = data.is_shared ? '#5856d6' : '#8e8e93';
+
+        if (data.is_shared && data.streak) {
+            document.getElementById('streakCount').textContent = data.streak;
+            document.getElementById('streakInfo').style.display = 'block';
+        } else {
+            document.getElementById('streakInfo').style.display = 'none';
+        }
+
+        document.getElementById('memberList').innerHTML = data.members.map(m => 
+            `<div class="member-chip" style="margin-bottom:5px; padding:8px; background:rgba(0,0,0,0.03); border-radius:10px;">
+                ${m.role === 'owner' ? '👑' : '👤'} ${m.username || 'User'}
+            </div>`
+        ).join('');
+
+        globalLogs = data.logs || {};
+        globalMemberCount = data.members.length;
+        
+        renderCalendar();
+    }).catch(err => console.error(err));
+}
+
+// Функции навигации
+function changeMonth(offset) {
+    viewDate.setMonth(viewDate.getMonth() + offset);
+    renderCalendar();
+}
+
+function debugShiftMonth(n) {
+    debugDateOffset += n;
+    renderCalendar();
+}
+
+function debugReset() {
+    debugDateOffset = 0;
+    viewDate = new Date();
+    loadHabit();
+}
+
+function renderCalendar() {
+    const grid = document.getElementById('calendarGrid');
+    const label = document.getElementById('monthYearLabel');
+    grid.innerHTML = '';
+
+    // Применяем смещение дебага к "фиктивному сегодня"
+    const fakeToday = new Date();
+    fakeToday.setMonth(fakeToday.getMonth() + debugDateOffset);
+
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
+
+    const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", 
+                        "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+    label.textContent = `${monthNames[month]} ${year}`;
+
+    // Обработка данных
+    const dayStats = {};
+    Object.values(globalLogs).forEach(userLogs => {
+        userLogs.forEach(log => {
+            const d = log.date; // Ожидаем YYYY-MM-DD
+            if (!dayStats[d]) dayStats[d] = { done: 0, fail: 0 };
+            if (log.completed === true) dayStats[d].done += 1;
+            if (log.completed === false) dayStats[d].fail += 1;
+        });
+    });
+
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    for (let d = 1; d <= daysInMonth; d++) {
+        const dayEl = document.createElement('div');
+        dayEl.className = 'calendar-day fade-in';
+        dayEl.textContent = d;
+        
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const stats = dayStats[dateStr];
+        
+        if (stats) {
+            if (stats.fail > 0) dayEl.classList.add('day-failed');
+            else if (stats.done === globalMemberCount && globalMemberCount > 0) dayEl.classList.add('day-full');
+            else if (stats.done > 0) dayEl.classList.add('day-partial');
+            else dayEl.classList.add('day-empty');
+        } else {
+            dayEl.classList.add('day-empty');
+        }
+        
+        // Подсветка "сегодня"
+        if (d === fakeToday.getDate() && month === fakeToday.getMonth() && year === fakeToday.getFullYear()) {
+            dayEl.classList.add('day-today');
+        }
+        
+        grid.appendChild(dayEl);
+    }
+}
+
+function markComplete(value) {
+    api(`/habits/${habitId}/log`, 'POST', { completed: value })
+        .then(() => {
+            loadHabit();
+            // Можно добавить тактильный фидбек или легкую анимацию успеха
+        })
+        .catch(err => alert(err.msg || 'Ошибка сохранения'));
+}
+
+function sendInvite() {
+    const username = document.getElementById('inviteUsername').value.trim();
+    if (!username) return;
+    api(`/habits/${habitId}/invite`, 'POST', { username })
+        .then(() => {
+            alert('Приглашение отправлено!');
+            document.getElementById('inviteUsername').value = '';
+            loadHabit();
+        })
+        .catch(err => alert(err.msg || 'Пользователь не найден'));
+}
+
+window.addEventListener('load', loadHabit);
+</script>
+{% endblock %}

@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="fade-in pb-5">
+  <header class="ios-header d-flex align-items-center">
+    <a href="/profile" style="text-decoration:none; margin-right: 15px; font-size: 24px;">←</a>
+    Настройки
+  </header>
+
+  <p class="text-muted px-2 mb-3" style="font-size: 14px;">Оставьте поле пустым, если не хотите изменять текущее значение.</p>
+
+  <section class="ios-glass-card p-0 mb-4" style="overflow: hidden;">
+    <div class="input-group-ios">
+      <label>Логин</label>
+      <input id="username" class="ios-field" placeholder="Новый никнейм">
+    </div>
+    
+    <div class="input-group-ios">
+      <label>Email</label>
+      <input id="email" type="email" class="ios-field" placeholder="example@mail.com">
+    </div>
+
+    <div class="input-group-ios" style="border: none;">
+      <label>Пароль</label>
+      <input id="password" type="password" class="ios-field" placeholder="Минимум 8 символов">
+    </div>
+  </section>
+
+  <div class="px-1">
+    <button class="ios-btn-main" onclick="saveSettings();">Сохранить изменения</button>
+    <a class="ios-link-sub" href="/profile" style="margin-top: 15px; opacity: 0.6;">Отменить и вернуться</a>
+  </div>
+</div>
+
+<style>
+  /* Стилизация группы полей в стиле настроек iOS */
+  .input-group-ios {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.3);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  .input-group-ios label {
+    width: 90px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #1c1c1e;
+    margin-bottom: 0;
+  }
+
+  .ios-field {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 16px;
+    color: #007AFF; /* Цвет акцента для вводимого текста */
+    outline: none;
+    padding: 5px 0;
+  }
+
+  .ios-field::placeholder {
+    color: #aeaeb2;
+    font-weight: 400;
+  }
+
+  /* Эффект при фокусе на всей строке */
+  .input-group-ios:focus-within {
+    background: rgba(255, 255, 255, 0.6);
+  }
+
+  /* Кастомизация основной кнопки под "успешное" действие */
+  .ios-btn-main {
+    background: #34c759; /* Apple Green */
+    box-shadow: 0 8px 20px rgba(52, 199, 89, 0.2);
+  }
+</style>
+
+<script>
+function saveSettings(){
+  const username = document.getElementById('username').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+
+  // Формируем объект только с измененными данными
+  const payload = {};
+  if(username) payload.username = username;
+  if(email) payload.email = email;
+  if(password) payload.password = password;
+
+  if(Object.keys(payload).length === 0) {
+    alert('Нет изменений для сохранения');
+    return;
+  }
+
+  api('/users/me', 'PUT', payload)
+    .then(() => {
+      // Имитация системного уведомления iOS
+      alert('Профиль успешно обновлен'); 
+      location.href = '/profile'; 
+    })
+    .catch(err => alert(err.msg || 'Ошибка при обновлении'));
+}
+
+window.addEventListener('load', () => {
+  api('/users/me', 'GET').then(data => {
+    document.getElementById('username').value = data.username || '';
+    document.getElementById('email').value = data.email || '';
+  }).catch(err => console.error('Ошибка загрузки профиля:', err));
+});
+</script>
+{% endblock %}

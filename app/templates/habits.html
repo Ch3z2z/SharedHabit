@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% block content %}
+
+
+<div class="fade-in">
+  <header class="ios-header" style="text-align: left; padding-left: 10px;">Привычки</header>
+
+  <section class="ios-glass-card mb-4">
+    <h4 style="font-weight: 600; margin-bottom: 16px; font-size: 19px;">Новая привычка</h4>
+    
+    <div class="mb-3">
+      <input id="newTitle" class="form-control ios-input" placeholder="Название" />
+    </div>
+    
+    <div class="mb-3">
+      <textarea id="newDesc" class="form-control ios-input" placeholder="Описание (необязательно)" rows="2"></textarea>
+    </div>
+
+    <div class="d-flex align-items-center justify-content-between mb-2 px-1">
+      <label class="form-check-label" for="newShared" style="font-size: 16px; color: #3a3a3c;">Сделать общей</label>
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" role="switch" id="newShared" style="width: 45px; height: 24px; cursor: pointer;">
+      </div>
+    </div>
+
+    <button class="ios-btn-main" onclick="createHabit();" style="margin-top: 10px;">Создать</button>
+  </section>
+
+  <section class="ios-glass-card">
+    <h4 style="font-weight: 600; margin-bottom: 16px; font-size: 19px;">Ваши трекеры</h4>
+    
+    <div id="habitsList" class="d-flex flex-column gap-2">
+      </div>
+
+    <div id="emptyHint" class="text-center py-4" style="display: none;">
+      <p style="color: #8e8e93; font-size: 15px;">Здесь пока пусто.<br>Самое время начать что-то новое!</p>
+    </div>
+  </section>
+</div>
+
+<style>
+  /* Дополнительные стили для элементов списка в стиле iOS 26 */
+  .habit-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.4);
+    padding: 16px;
+    border-radius: 20px;
+    text-decoration: none !important;
+    color: #1c1c1e !important;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.2s ease;
+  }
+
+  .habit-item:active {
+    transform: scale(0.98);
+    background: rgba(255, 255, 255, 0.6);
+  }
+
+  .habit-info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .habit-title {
+    font-weight: 600;
+    font-size: 17px;
+    margin-bottom: 2px;
+  }
+
+  .habit-meta {
+    font-size: 13px;
+    color: #8e8e93;
+  }
+
+  .ios-badge {
+    background: rgba(0, 122, 255, 0.1);
+    color: #007AFF;
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  
+  /* Кастомный стиль для переключателя (Switch) */
+  .form-check-input:checked {
+    background-color: #34c759; /* Apple Success Green */
+    border-color: #34c759;
+  }
+  
+</style>
+
+<script>
+
+// Обновляем загрузку при старте
+window.addEventListener('load', () => {
+  loadHabits();
+  checkInvites();
+});
+function createHabit(){
+  const title = document.getElementById('newTitle').value.trim();
+  if(!title){ alert('Введите название'); return; }
+  
+  const desc = document.getElementById('newDesc').value.trim();
+  const shared = document.getElementById('newShared').checked;
+  
+  api('/habits','POST',{ title, description: desc, is_shared: shared })
+    .then(()=>{ 
+      document.getElementById('newTitle').value=''; 
+      document.getElementById('newDesc').value=''; 
+      document.getElementById('newShared').checked=false; 
+      loadHabits(); 
+    })
+    .catch(err=>alert(err.msg||JSON.stringify(err)));
+}
+
+function loadHabits(){
+  api('/habits','GET').then(data=>{
+    const list = document.getElementById('habitsList');
+    const hint = document.getElementById('emptyHint');
+    list.innerHTML='';
+    
+    if(!data || data.length===0){ 
+      hint.style.display='block'; 
+      return; 
+    }
+    
+    hint.style.display='none';
+    data.forEach(h=>{
+      const card = document.createElement('a');
+      card.className = 'habit-item';
+      card.href = '/habit/' + h.id;
+      
+      const badge = h.is_shared ? `<span class="ios-badge">Общая</span>` : '';
+      
+      card.innerHTML = `
+        <div class="habit-info">
+          <span class="habit-title">${h.title}</span>
+          <span class="habit-meta">Автор: ${h.created_by_username || 'вы'}</span>
+        </div>
+        ${badge}
+      `;
+      list.appendChild(card);
+    });
+  }).catch(err=>console.error('Ошибка загрузки привычек:', err));
+}
+
+window.addEventListener('load', loadHabits);
+</script>
+{% endblock %}

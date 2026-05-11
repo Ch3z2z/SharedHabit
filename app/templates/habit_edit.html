@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="fade-in pb-5">
+  <header class="ios-header d-flex align-items-center">
+    <a href="/habit/{{ habit_id }}" style="text-decoration:none; margin-right: 15px; font-size: 24px;">←</a>
+    Редактирование
+  </header>
+
+  <section class="ios-glass-card p-0 mb-4" style="overflow: hidden;">
+    <div class="input-group-ios">
+      <label>Название</label>
+      <input id="habitTitle" class="ios-field" placeholder="Название привычки">
+    </div>
+    
+    <div class="input-group-ios align-items-start">
+      <label class="mt-1">Описание</label>
+      <textarea id="habitDesc" class="ios-field" rows="3" placeholder="Зачем вам это нужно?"></textarea>
+    </div>
+
+    <div class="input-group-ios d-flex justify-content-between align-items-center" style="border: none;">
+      <label style="width: auto;">Общая привычка</label>
+      <div class="ios-switch-container">
+        <input type="checkbox" id="habitShared" class="ios-switch-input">
+        <label for="habitShared" class="ios-switch-label"></label>
+      </div>
+    </div>
+  </section>
+
+  <p class="text-muted px-3 mb-4" style="font-size: 13px;">
+    Включение «Общей привычки» позволит вам приглашать друзей и отслеживать совместный прогресс.
+  </p>
+
+  <div class="px-1">
+    <button class="ios-btn-main shadow-sm" style="background: #007AFF;" onclick="saveHabit();">Сохранить</button>
+    <a class="ios-link-sub" href="/habit/{{ habit_id }}" style="margin-top: 15px;">Отменить изменения</a>
+  </div>
+</div>
+
+<style>
+  /* Группировка полей (как в профиле) */
+  .input-group-ios {
+    display: flex;
+    padding: 14px 20px;
+    background: rgba(255, 255, 255, 0.3);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  .input-group-ios label {
+    width: 100px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #1c1c1e;
+    margin-bottom: 0;
+  }
+
+  .ios-field {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 16px;
+    color: #1c1c1e;
+    outline: none;
+    padding: 0;
+  }
+
+  .ios-field::placeholder { color: #aeaeb2; }
+
+  /* Кастомный iOS Switch */
+  .ios-switch-container {
+    position: relative;
+    width: 51px;
+    height: 31px;
+  }
+
+  .ios-switch-input {
+    opacity: 0; width: 0; height: 0;
+  }
+
+  .ios-switch-label {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #e9e9ea;
+    transition: .4s;
+    border-radius: 34px;
+  }
+
+  .ios-switch-label:before {
+    position: absolute;
+    content: "";
+    height: 27px; width: 27px;
+    left: 2px; bottom: 2px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+  }
+
+  .ios-switch-input:checked + .ios-switch-label {
+    background-color: #34c759; /* Apple Green */
+  }
+
+  .ios-switch-input:checked + .ios-switch-label:before {
+    transform: translateX(20px);
+  }
+  
+</style>
+
+<script>
+const habitId = {{ habit_id }};
+
+function loadHabit(){
+  api('/habits/' + habitId, 'GET').then(data => {
+    document.getElementById('habitTitle').value = data.title;
+    document.getElementById('habitDesc').value = data.description || '';
+    document.getElementById('habitShared').checked = !!data.is_shared;
+  }).catch(err => alert(err.msg || 'Ошибка загрузки'));
+}
+
+function saveHabit(){
+  const title = document.getElementById('habitTitle').value.trim();
+  if(!title) return alert('Введите название');
+
+  api('/habits/' + habitId, 'PUT', {
+    title: title,
+    description: document.getElementById('habitDesc').value,
+    is_shared: document.getElementById('habitShared').checked
+  }).then(() => {
+    // Красивое уведомление вместо стандартного alert
+    window.location = '/habit/' + habitId; 
+  }).catch(err => alert(err.msg || 'Ошибка при сохранении'));
+}
+
+window.addEventListener('load', loadHabit);
+</script>
+{% endblock %}
