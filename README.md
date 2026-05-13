@@ -1,6 +1,10 @@
 # SharedHabits
 
-SharedHabits — это веб-приложение для совместного отслеживания привычек. Пользователи могут создавать привычки, делиться ими с друзьями, приглашать участников и отслеживать прогресс выполнения.
+SharedHabits — это веб-приложение для совместного отслеживания привычек. Пользователи могут создавать привычки, делиться ими с друзьями, приглашать участников и отслеживать прогресс выполнения.\
+<p align=center ><img width="297" height="600" alt="image" src="https://github.com/user-attachments/assets/356e5200-4db7-417c-b87d-6de6ef9e82ce" />&nbsp;&nbsp;&nbsp;<img width="362" height="600" alt="image" src="https://github.com/user-attachments/assets/5f23b9e9-0c27-4e83-aa12-b20f969fe9df" />
+</p>
+
+
 
 ## Что внутри
 
