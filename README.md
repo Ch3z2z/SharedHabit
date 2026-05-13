@@ -145,10 +145,3 @@ SharedHabbits/
 - `GET /api/invites` — список приглашений
 - `POST /api/invites/<id>/accept` — принятие приглашения
 
-## Поддержка
-
-Если что-то пошло не так:
-
-- проверьте, что Docker и Docker Compose установлены;
-- убедитесь, что контейнеры подняты командой `docker-compose up -d`;
-- если приложение не стартует локально, проверьте `DATABASE_URL` и наличие PostgreSQL.
