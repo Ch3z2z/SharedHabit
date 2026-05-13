@@ -1,4 +1,4 @@
 class Config:
-    SQLALCHEMY_DATABASE_URI = "postgresql://postgres:postgres@localhost/SharedHabit"
+    SQLALCHEMY_DATABASE_URI = "postgresql://postgres:postgres@localhost/SharedHabit1"
     JWT_SECRET_KEY = "super-secret"
     SQLALCHEMY_TRACK_MODIFICATIONS = False

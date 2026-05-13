@@ -1,8 +1,8 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db, jwt
-from .models import Users
+from .models import Users, TokenBlocklist
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -34,8 +34,21 @@ def login():
     return jsonify(access_token=token)
 
 
-from flask_jwt_extended import jwt_required, get_jwt_identity
-
+@auth_bp.route("/logout", methods=["POST"])
+@jwt_required()
+def logout():
+    token = get_jwt()
+    jti = token.get("jti")
+    
+    if not jti:
+        return jsonify({"msg": "Invalid token"}), 400
+    
+    # Добавляем токен в черный список
+    blocklisted_token = TokenBlocklist(jti=jti)
+    db.session.add(blocklisted_token)
+    db.session.commit()
+    
+    return jsonify({"msg": "Logged out successfully"}), 200
 
 @auth_bp.route("/users/me", methods=["GET"])
 @jwt_required()

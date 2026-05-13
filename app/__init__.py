@@ -16,6 +16,14 @@ def create_app():
     jwt.init_app(app)
     migrate.init_app(app, db)
 
+    # JWT Blocklist callback
+    @jwt.token_in_blocklist_loader
+    def check_if_token_revoked(jwt_header, jwt_payload):
+        from .models import TokenBlocklist
+        jti = jwt_payload.get("jti")
+        token = TokenBlocklist.query.filter_by(jti=jti).first()
+        return token is not None
+
     # Register blueprints
     from .auth import auth_bp
     from .habits import habits_bp

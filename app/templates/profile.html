@@ -99,8 +99,14 @@ function loadProfile(){
 
 function handleLogout() {
   if (confirm('Вы уверены, что хотите выйти?')) {
-    localStorage.removeItem('access_token');
-    window.location = '/';
+    api('/logout', 'POST').then(data => {
+      localStorage.removeItem('access_token');
+      window.location = '/';
+    }).catch(err => {
+      console.error('Ошибка выхода:', err);
+      localStorage.removeItem('access_token');
+      window.location = '/';
+    });
   }
 }
 
