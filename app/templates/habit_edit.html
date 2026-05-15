@@ -13,7 +13,7 @@
     </div>
     
     <div class="input-group-ios align-items-start">
-      <label class="mt-1">Описание</label>
+      <label>Описание</label>
       <textarea id="habitDesc" class="ios-field" rows="3" placeholder="Зачем вам это нужно?"></textarea>
     </div>
 
@@ -38,29 +38,41 @@
 
 <style>
   /* Группировка полей (как в профиле) */
+  .mt-1{
+    margin-top: -0.25rem;
+  }
+
   .input-group-ios {
     display: flex;
+    align-items: center;
+    gap: 16px;
     padding: 14px 20px;
     background: rgba(255, 255, 255, 0.3);
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   }
 
   .input-group-ios label {
-    width: 50px;
     font-size: 16px;
     font-weight: 500;
     color: #1c1c1e;
     margin-bottom: 0;
+    flex-shrink: 0;
   }
 
   .ios-field {
     flex: 1;
+    width: 100%;
     border: none;
     background: transparent;
     font-size: 16px;
     color: #1c1c1e;
     outline: none;
     padding: 0;
+  }
+
+  textarea.ios-field {
+    resize: vertical;
+    min-height: 80px;
   }
 
   .ios-field::placeholder { color: #aeaeb2; }
@@ -83,6 +95,7 @@
     background-color: #e9e9ea;
     transition: .4s;
     border-radius: 34px;
+    max-width: 50px;
   }
 
   .ios-switch-label:before {
@@ -104,6 +117,11 @@
     transform: translateX(20px);
   }
   
+  .input-group-ios.align-items-start {
+    align-items: flex-start;
+  }
+
+
 </style>
 
 <script>
