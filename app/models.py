@@ -1,6 +1,12 @@
 from . import db
 from datetime import datetime
+import enum
 import uuid
+
+class InviteStatus(enum.Enum):
+    pending = "pending"
+    accepted = "accepted"
+    rejected = "rejected"
 
 class Users(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -49,7 +55,7 @@ class Invites(db.Model):
     invited_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
 
     email = db.Column(db.String)
-    status = db.Column(db.String, default="pending")
+    status = db.Column(db.Enum(InviteStatus, name="invite_status"), default=InviteStatus.pending, nullable=False)
 
     token = db.Column(db.String, unique=True)
     expires_at = db.Column(db.DateTime)

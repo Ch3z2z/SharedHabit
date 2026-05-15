@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import uuid
 from collections import defaultdict
 from . import db
-from .models import Habits, HabitMembers, HabitLogs, Invites, Users
+from .models import Habits, HabitMembers, HabitLogs, Invites, Users, InviteStatus
 from .utils import is_member, is_owner
 
 habits_bp = Blueprint('habits', __name__)
@@ -97,7 +97,7 @@ def get_habit(habit_id):
             "inviter_username": get_username_from_id(inv.inviter_id),
             "invited_user_id": inv.invited_user_id,
             "invited_username": get_username_from_id(inv.invited_user_id),
-            "status": inv.status,
+            "status": inv.status.value,
         }
         if inv.invited_user_id == user_id or inv.inviter_id == user_id:
             data["token"] = inv.token
@@ -306,7 +306,7 @@ def accept_invite(token):
 
     invite = Invites.query.filter_by(token=token).first()
 
-    if not invite or invite.status != "pending" or (invite.invited_user_id and invite.invited_user_id != int(user_id)):
+    if not invite or invite.status != InviteStatus.pending or (invite.invited_user_id and invite.invited_user_id != int(user_id)):
         return jsonify({"msg": "Invalid invite"}), 400
     
     if invite.expires_at < datetime.utcnow():
@@ -315,7 +315,7 @@ def accept_invite(token):
     if is_member(int(user_id), invite.habit_id):
         return jsonify({"msg": "Already a member"}), 400
 
-    invite.status = "accepted"
+    invite.status = InviteStatus.accepted
 
     member = HabitMembers(
         habit_id=invite.habit_id,
@@ -331,7 +331,7 @@ def accept_invite(token):
 @jwt_required()
 def list_my_invites():
     user_id = int(get_jwt_identity())
-    pending = Invites.query.filter_by(invited_user_id=user_id, status='pending').all()
+    pending = Invites.query.filter_by(invited_user_id=user_id, status=InviteStatus.pending).all()
     return jsonify([{
         'id': i.id,
         'habit_id': i.habit_id,
@@ -342,7 +342,7 @@ def list_my_invites():
         'invited_username': get_username_from_id(i.invited_user_id),
         'email': i.email,
         'token': i.token,
-        'status': i.status,
+        'status': i.status.value,
         'expires_at': i.expires_at.isoformat() if i.expires_at else None
     } for i in pending])
 
@@ -353,10 +353,10 @@ def reject_invite(token):
     user_id = int(get_jwt_identity())
     invite = Invites.query.filter_by(token=token).first()
 
-    if not invite or invite.status != "pending" or invite.invited_user_id != user_id:
+    if not invite or invite.status != InviteStatus.pending or invite.invited_user_id != user_id:
         return jsonify({"msg": "Invalid invite"}), 400
 
-    invite.status = "rejected"
+    invite.status = InviteStatus.rejected
     db.session.commit()
 
     return jsonify({"msg": "rejected"})
@@ -395,9 +395,6 @@ def leave_habit(habit_id):
 
     if not member:
         return jsonify({"msg": "Not a member"}), 404
-
-    if member.role == "owner":
-        return jsonify({"msg": "Owner cannot leave. Transfer ownership or delete habit"}), 400
 
     db.session.delete(member)
     db.session.commit()
