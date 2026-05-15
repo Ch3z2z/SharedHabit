@@ -71,9 +71,26 @@ function doLogin(){
 }
 
 function doRegister(){
-  const user = document.getElementById('regUser').value;
-  const email = document.getElementById('regEmail').value;
+  const user = document.getElementById('regUser').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if(user.length < 3) {
+      alert('Никнейм должен быть не менее 3 символов');
+      return;
+  }
+
+  if (!emailRegex.test(email)) {
+      alert('Введите корректный email');
+      return;
+  }
   const pass = document.getElementById('regPass').value;
+
+
+  if (pass.length < 8) {
+      alert('Пароль должен быть не менее 8 символов');
+      return;
+  }
   
   api('/register', 'POST', { username: user, email: email, password: pass })
     .then(() => {
