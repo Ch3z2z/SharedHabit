@@ -138,6 +138,7 @@ SharedHabbits/
 - `POST /api/login` — вход
 - `POST /api/register` — регистрация
 - `POST /api/logout` — выход
+- `POST /api/refresh` — refresh token
 - `GET /api/habits` — список привычек
 - `POST /api/habits` — создание привычки
 - `GET /api/habits/<id>` — детали привычки
