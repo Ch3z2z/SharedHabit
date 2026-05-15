@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import uuid
 from collections import defaultdict
 from . import db
-from .models import Habits, HabitMembers, HabitLogs, Invites, Users, InviteStatus
+from .models import Habits, HabitMembers, HabitLogs, Invites, Users, InviteStatus, HabitRole
 from .utils import is_member, is_owner
 
 habits_bp = Blueprint('habits', __name__)
@@ -38,7 +38,7 @@ def create_habit():
     member = HabitMembers(
         habit_id=habit.id,
         user_id=user_id,
-        role="owner"
+        role=HabitRole.owner
     )
 
     db.session.add(member)
@@ -141,7 +141,7 @@ def get_habit(habit_id):
         members_data.append({
             "user_id": member.user_id,
             "username": get_username_from_id(member.user_id),
-            "role": member.role,
+            "role": member.role.value,
             "today_completed": today_status_by_user.get(member.user_id),
             "streak": calculate_streak(member_completed_dates)
         })
@@ -417,7 +417,7 @@ def remove_member(habit_id, user_id):
     if not member:
         return jsonify({"msg": "Member not found"}), 404
 
-    if member.role == "owner":
+    if member.role == HabitRole.owner:
         return jsonify({"msg": "Cannot remove owner"}), 400
 
     db.session.delete(member)

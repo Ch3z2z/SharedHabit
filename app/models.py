@@ -10,6 +10,11 @@ class InviteStatus(enum.Enum):
     rejected = "rejected"
 
 
+class HabitRole(enum.Enum):
+    owner = "owner"
+    member = "member"
+
+
 class Users(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, unique=True, nullable=False)
@@ -50,7 +55,7 @@ class HabitMembers(db.Model):
     )
 
     # owner / member
-    role = db.Column(db.String, default="member")
+    role = db.Column(db.Enum(HabitRole, name="habit_role"), default=HabitRole.member)
 
     __table_args__ = (
         db.UniqueConstraint("habit_id", "user_id"),
