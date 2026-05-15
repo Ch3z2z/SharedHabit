@@ -1,0 +1,29 @@
+services:
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db/SharedHabit
+      - JWT_SECRET_KEY=super-secret
+    depends_on:
+      - db
+    volumes:
+       - ./app:/app/app
+       - ./run.py:/app/run.py
+       - ./requirements.txt:/app/requirements.txt
+    command: python run.py
+
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=SharedHabit
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
