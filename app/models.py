@@ -25,6 +25,7 @@ class TokenBlocklist(db.Model):
 
 class Habits(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+
     title = db.Column(db.String, nullable=False)
     description = db.Column(db.String)
 
@@ -108,39 +109,52 @@ class Invites(db.Model):
     expires_at = db.Column(db.DateTime)
 
 
-# =========================
+# =========================================================
 # TRIGGER FUNCTION
-# =========================
+# =========================================================
 
 transfer_owner_function = DDL("""
 CREATE OR REPLACE FUNCTION transfer_habit_ownership()
 RETURNS TRIGGER AS $$
 DECLARE
+    members_count INTEGER;
     new_owner_member_id INTEGER;
     new_owner_user_id INTEGER;
 BEGIN
 
-    -- Проверяем, был ли удалён владелец
+    -- Считаем оставшихся участников
+    SELECT COUNT(*)
+    INTO members_count
+    FROM habit_members
+    WHERE habit_id = OLD.habit_id;
+
+    -- Если участников больше нет -> удалить привычку
+    IF members_count = 0 THEN
+
+        DELETE FROM habits
+        WHERE id = OLD.habit_id;
+
+        RETURN OLD;
+
+    END IF;
+
+
+    -- Если удалён owner -> передаём ownership
     IF OLD.role = 'owner' THEN
 
-        -- Ищем нового владельца
         SELECT id, user_id
         INTO new_owner_member_id, new_owner_user_id
         FROM habit_members
         WHERE habit_id = OLD.habit_id
-          AND id != OLD.id
         ORDER BY id
         LIMIT 1;
 
-        -- Если участник найден
         IF new_owner_member_id IS NOT NULL THEN
 
-            -- Назначаем новую роль
             UPDATE habit_members
             SET role = 'owner'
             WHERE id = new_owner_member_id;
 
-            -- Обновляем created_by
             UPDATE habits
             SET created_by = new_owner_user_id
             WHERE id = OLD.habit_id;
@@ -155,9 +169,9 @@ $$ LANGUAGE plpgsql;
 """)
 
 
-# =========================
+# =========================================================
 # TRIGGER
-# =========================
+# =========================================================
 
 transfer_owner_trigger = DDL("""
 CREATE TRIGGER trg_transfer_habit_ownership
@@ -167,9 +181,9 @@ EXECUTE FUNCTION transfer_habit_ownership();
 """)
 
 
-# =========================
+# =========================================================
 # REGISTER EVENTS
-# =========================
+# =========================================================
 
 event.listen(
     HabitMembers.__table__,
